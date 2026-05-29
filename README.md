@@ -10,6 +10,7 @@ Aplikasi todolist harian dengan dashboard sidebar kiri, autentikasi JWT, dan man
 - Kalender bulanan untuk visualisasi task harian
 - CRUD user (email + password)
 - Bootstrap user pertama dari halaman login (hanya jika database masih kosong)
+- Cron scheduler pengingat task via Resend API (tanpa SMTP)
 
 ## Stack
 
@@ -67,6 +68,24 @@ npm run dev
 - `npm run dev`
 - `npm run lint`
 - `npm run build -- --webpack`
+- `npm run cron:task-reminder` (jalan terus sesuai cron expression)
+- `npm run cron:task-reminder:once` (eksekusi sekali untuk tes)
 - `npm run db:generate`
 - `npm run db:migrate`
 - `npm run db:studio`
+
+## Cron Reminder Email (Resend)
+
+Tambahkan konfigurasi berikut di `.env`:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `TASK_REMINDER_CRON` (default: `0 8 * * *`)
+- `TASK_REMINDER_TIMEZONE` (default: `Asia/Jakarta`)
+- `TASK_REMINDER_DRY_RUN` (`true/false`)
+
+Perilaku:
+
+- Scheduler akan mencari task user yang jatuh tempo hari ini (UTC date) dengan status `PENDING`, `ON_PROGRESS`, atau `HOLD`.
+- Email pengingat dikirim per user ke email akun masing-masing.
+- Pengiriman memakai Resend Node SDK (`resend.emails.send`) dengan React template di `components/email-template.mjs`.

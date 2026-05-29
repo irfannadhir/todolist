@@ -10,12 +10,20 @@ import {
 } from "@/features/tasks/services/task-service";
 import { type TaskFilters, type TaskPayload } from "@/features/tasks/types/task";
 
-const queryKey = (filters?: TaskFilters) => ["tasks", filters?.month, filters?.year];
+const queryKey = (filters?: TaskFilters) => [
+  "tasks",
+  filters?.month,
+  filters?.year,
+  filters?.dateFrom,
+  filters?.dateTo,
+  filters?.groupBy,
+];
 
-export function useTasks(filters?: TaskFilters) {
+export function useTasks(filters?: TaskFilters, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKey(filters),
     queryFn: () => getTasks(filters),
+    enabled: options?.enabled,
   });
 }
 

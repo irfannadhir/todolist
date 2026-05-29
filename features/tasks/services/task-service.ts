@@ -40,6 +40,18 @@ export async function getTasks(filters?: TaskFilters): Promise<TaskItem[]> {
     params.set("year", String(filters.year));
   }
 
+  if (filters?.dateFrom) {
+    params.set("dateFrom", filters.dateFrom);
+  }
+
+  if (filters?.dateTo) {
+    params.set("dateTo", filters.dateTo);
+  }
+
+  if (filters?.groupBy) {
+    params.set("groupBy", filters.groupBy);
+  }
+
   const query = params.toString();
   const url = query ? `${API_BASE}?${query}` : API_BASE;
 

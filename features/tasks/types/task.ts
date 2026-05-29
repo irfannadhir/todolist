@@ -17,6 +17,7 @@ export type TaskItem = {
   dateFrom: string | null;
   dateTo: string | null;
   isRecurring: boolean;
+  userId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -35,4 +36,7 @@ export type TaskPayload = {
 export type TaskFilters = {
   month?: number;
   year?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  groupBy?: "recurring";
 };

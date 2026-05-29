@@ -8,19 +8,18 @@ import {
   format,
   isSameDay,
   isSameMonth,
-  isWithinInterval,
   parseISO,
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { useState, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { type TaskItem } from "@/features/tasks/types/task";
 
 type TaskCalendarProps = {
   monthDate: Date;
   selectedDate: Date;
-  selectedDates: Date[];
+  selectedDates?: Date[];
   tasks: TaskItem[];
   onSelectDate: (date: Date) => void;
   onSelectDateRange: (dates: Date[]) => void;
@@ -32,7 +31,7 @@ const weekdayLabels = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 export function TaskCalendar({
   monthDate,
   selectedDate,
-  selectedDates,
+  selectedDates = [],
   tasks,
   onSelectDate,
   onSelectDateRange,
@@ -40,6 +39,7 @@ export function TaskCalendar({
 }: TaskCalendarProps) {
   const [isSelecting, setIsSelecting] = useState(false);
   const [rangeStart, setRangeStart] = useState<Date | null>(null);
+  const didDragRef = useRef(false);
 
   const monthStart = startOfMonth(monthDate);
   const monthEnd = endOfMonth(monthStart);
@@ -74,6 +74,7 @@ export function TaskCalendar({
     (date: Date) => {
       setIsSelecting(true);
       setRangeStart(date);
+      didDragRef.current = false;
       onSelectDateRange([date]);
     },
     [onSelectDateRange],
@@ -82,6 +83,9 @@ export function TaskCalendar({
   const handleMouseEnter = useCallback(
     (date: Date) => {
       if (isSelecting && rangeStart) {
+        if (!isSameDay(rangeStart, date)) {
+          didDragRef.current = true;
+        }
         const start = rangeStart < date ? rangeStart : date;
         const end = rangeStart < date ? date : rangeStart;
         const datesInRange: Date[] = [];
@@ -103,6 +107,11 @@ export function TaskCalendar({
 
   const handleClick = useCallback(
     (date: Date) => {
+      if (didDragRef.current) {
+        didDragRef.current = false;
+        return;
+      }
+
       if (!isSelecting) {
         onSelectDate(date);
         onSelectDateRange([date]);

@@ -31,7 +31,11 @@ export function LogoutButton() {
       confirmText="Ya, Logout"
       cancelText="Batal"
       onConfirm={handleLogout}
-      trigger={<Button variant="destructive" size="sm">Logout</Button>}
+      trigger={
+        <Button variant="outline" size="sm" disabled={isLoading}>
+          {isLoading ? "Memproses..." : "Logout"}
+        </Button>
+      }
     />
   );
 }

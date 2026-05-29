@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -19,6 +21,8 @@ interface ConfirmDialogProps {
   onConfirm: () => void | Promise<void>;
   trigger: React.ReactNode;
   isLoading?: boolean;
+  confirmVariant?: "default" | "outline" | "ghost" | "destructive";
+  triggerDisabled?: boolean;
 }
 
 export function ConfirmDialog({
@@ -29,10 +33,31 @@ export function ConfirmDialog({
   onConfirm,
   trigger,
   isLoading = false,
+  confirmVariant = "destructive",
+  triggerDisabled = false,
 }: ConfirmDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const isBusy = isLoading || isConfirming;
+
+  const handleConfirm = async () => {
+    try {
+      setIsConfirming(true);
+      await onConfirm();
+      setOpen(false);
+    } catch {
+      // Keep dialog open when action fails (for example form validation error).
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild disabled={triggerDisabled}>
+        {trigger}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -40,16 +65,16 @@ export function ConfirmDialog({
         </DialogHeader>
         <DialogFooter className="mt-4">
           <DialogTrigger asChild>
-            <Button variant="outline" disabled={isLoading}>
+            <Button variant="outline" disabled={isBusy}>
               {cancelText}
             </Button>
           </DialogTrigger>
           <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isLoading}
+            variant={confirmVariant}
+            onClick={handleConfirm}
+            disabled={isBusy}
           >
-            {isLoading ? "Memproses..." : confirmText}
+            {isBusy ? "Memproses..." : confirmText}
           </Button>
         </DialogFooter>
       </DialogContent>

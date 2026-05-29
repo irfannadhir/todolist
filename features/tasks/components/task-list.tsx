@@ -57,6 +57,17 @@ export function TaskList({
                   <p className="mt-1 text-xs text-[#75758a]">
                     {format(parseISO(task.dueDate), "dd MMM yyyy")}
                   </p>
+                  {task.dueTime ? (
+                    <p className="mt-1 text-xs text-[#75758a]">
+                      Reminder: {task.dueTime}
+                    </p>
+                  ) : null}
+                  {task.isRecurring && task.dateFrom && task.dateTo ? (
+                    <p className="mt-1 text-xs text-[#75758a]">
+                      Berulang: {format(parseISO(task.dateFrom), "dd MMM yyyy")} -{" "}
+                      {format(parseISO(task.dateTo), "dd MMM yyyy")}
+                    </p>
+                  ) : null}
                 </div>
                 <StatusBadge status={task.status} />
               </div>
@@ -69,15 +80,25 @@ export function TaskList({
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {TASK_STATUSES.map((status) => (
-                  <Button
+                  <ConfirmDialog
                     key={status}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onQuickStatusChange(task, status)}
-                    disabled={task.status === status}
-                  >
-                    {statusLabelMap[status]}
-                  </Button>
+                    title="Konfirmasi Ubah Status"
+                    description={`Ubah status "${task.title}" menjadi "${statusLabelMap[status]}"?`}
+                    confirmText="Ya, Ubah"
+                    cancelText="Batal"
+                    confirmVariant="default"
+                    onConfirm={() => onQuickStatusChange(task, status)}
+                    triggerDisabled={task.status === status}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={task.status === status}
+                      >
+                        {statusLabelMap[status]}
+                      </Button>
+                    }
+                  />
                 ))}
               </div>
 

@@ -24,13 +24,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return Response.json({ message: "Email atau password salah" }, { status: 401 });
+      return Response.json(
+        { message: "Email atau password salah" },
+        { status: 401 },
+      );
     }
 
-    const passwordMatch = await comparePassword(parsedBody.data.password, user.passwordHash);
+    const passwordMatch = await comparePassword(
+      parsedBody.data.password,
+      user.passwordHash,
+    );
 
     if (!passwordMatch) {
-      return Response.json({ message: "Email atau password salah" }, { status: 401 });
+      return Response.json(
+        { message: "Email atau password salah" },
+        { status: 401 },
+      );
     }
 
     const token = await signAuthToken({
@@ -55,7 +64,12 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch {
-    return Response.json({ message: "Terjadi kesalahan saat login" }, { status: 500 });
+  } catch (e) {
+    console.log("Login error:", e);
+
+    return Response.json(
+      { message: "Terjadi kesalahan saat login" },
+      { status: 500 },
+    );
   }
 }

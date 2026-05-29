@@ -39,6 +39,10 @@ export function TaskDetailSection({
             description: task.description ?? "",
             status: task.status,
             dueDate: task.dueDate.slice(0, 10),
+            dueTime: task.dueTime ?? "",
+            dateFrom: task.dateFrom?.slice(0, 10) ?? "",
+            dateTo: task.dateTo?.slice(0, 10) ?? "",
+            isRecurring: task.isRecurring,
           }}
           onSubmit={onSubmit}
           isSubmitting={isUpdating}

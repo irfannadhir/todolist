@@ -27,6 +27,11 @@ function taskToResponse(task: {
   description: string | null;
   status: PrismaTaskStatus;
   dueDate: Date;
+  dueTime: string | null;
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  isRecurring: boolean;
+  userId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -36,6 +41,11 @@ function taskToResponse(task: {
     description: task.description,
     status: statusFromDb[task.status],
     dueDate: task.dueDate.toISOString(),
+    dueTime: task.dueTime,
+    dateFrom: task.dateFrom?.toISOString() ?? null,
+    dateTo: task.dateTo?.toISOString() ?? null,
+    isRecurring: task.isRecurring,
+    userId: task.userId,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   };
@@ -64,7 +74,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await prisma.task.findFirst({
+      where: { id, userId: session.sub },
+    });
 
     if (!task) {
       return Response.json({ message: "Task tidak ditemukan" }, { status: 404 });
@@ -96,6 +108,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const payload = parsedBody.data;
+    const existingTask = await prisma.task.findFirst({
+      where: { id, userId: session.sub },
+      select: { id: true },
+    });
+
+    if (!existingTask) {
+      return Response.json({ message: "Task tidak ditemukan" }, { status: 404 });
+    }
 
     const updatedTask = await prisma.task.update({
       where: { id },
@@ -114,6 +134,26 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ...(payload.dueDate !== undefined
           ? {
               dueDate: new Date(payload.dueDate),
+            }
+          : {}),
+        ...(payload.dueTime !== undefined
+          ? {
+              dueTime: payload.dueTime?.trim() ? payload.dueTime.trim() : null,
+            }
+          : {}),
+        ...(payload.dateFrom !== undefined
+          ? {
+              dateFrom: payload.dateFrom ? new Date(payload.dateFrom) : null,
+            }
+          : {}),
+        ...(payload.dateTo !== undefined
+          ? {
+              dateTo: payload.dateTo ? new Date(payload.dateTo) : null,
+            }
+          : {}),
+        ...(payload.isRecurring !== undefined
+          ? {
+              isRecurring: payload.isRecurring,
             }
           : {}),
       },
@@ -141,7 +181,13 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await prisma.task.delete({ where: { id } });
+    const deletedTask = await prisma.task.deleteMany({
+      where: { id, userId: session.sub },
+    });
+
+    if (deletedTask.count === 0) {
+      return Response.json({ message: "Task tidak ditemukan" }, { status: 404 });
+    }
 
     return Response.json({ data: null, message: "Task berhasil dihapus" });
   } catch (error) {

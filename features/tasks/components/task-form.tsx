@@ -5,19 +5,16 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   taskPayloadSchema,
-  taskStatusSchema,
   taskUpdatePayloadSchema,
 } from "@/features/tasks/schemas/task-schema";
 import { TASK_STATUSES, type TaskPayload } from "@/features/tasks/types/task";
 
-const formSchema = taskPayloadSchema.extend({
-  status: taskStatusSchema,
-  description: z.string().max(500).optional().or(z.literal("")),
-});
+const formSchema = taskPayloadSchema;
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.input<typeof formSchema>;
 
 type BaseTaskFormProps = {
   defaultValues?: Partial<FormValues>;
@@ -66,11 +63,14 @@ export function TaskForm({
   const isRecurring = form.watch("isRecurring");
 
   const submitHandler = form.handleSubmit(async (values) => {
+    const normalizedDueDate =
+      values.isRecurring && values.dateFrom ? values.dateFrom : values.dueDate;
+
     const payload = {
       title: values.title,
       description: values.description,
-      dueDate: values.dueDate,
-      status: values.status,
+      dueDate: normalizedDueDate,
+      status: values.status ?? "pending",
       dueTime: values.dueTime,
       dateFrom: values.dateFrom,
       dateTo: values.dateTo,
@@ -98,6 +98,16 @@ export function TaskForm({
       isRecurring: false,
     });
   });
+
+  const handleConfirmSubmit = async () => {
+    const isValid = await form.trigger();
+
+    if (!isValid) {
+      throw new Error("Form task tidak valid");
+    }
+
+    await submitHandler();
+  };
 
   return (
     <form onSubmit={submitHandler} className="space-y-4">
@@ -174,6 +184,11 @@ export function TaskForm({
             className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
             {...form.register("dueTime")}
           />
+          {form.formState.errors.dueTime ? (
+            <p className="text-xs text-[#b30000]">
+              {form.formState.errors.dueTime.message}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -204,6 +219,11 @@ export function TaskForm({
               className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
               {...form.register("dateFrom")}
             />
+            {form.formState.errors.dateFrom ? (
+              <p className="text-xs text-[#b30000]">
+                {form.formState.errors.dateFrom.message}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1">
@@ -219,6 +239,11 @@ export function TaskForm({
               className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
               {...form.register("dateTo")}
             />
+            {form.formState.errors.dateTo ? (
+              <p className="text-xs text-[#b30000]">
+                {form.formState.errors.dateTo.message}
+              </p>
+            ) : null}
           </div>
         </div>
       )}
@@ -240,9 +265,24 @@ export function TaskForm({
         </select>
       </div>
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Menyimpan..." : submitLabel}
-      </Button>
+      <ConfirmDialog
+        title={mode === "edit" ? "Konfirmasi Update Task" : "Konfirmasi Simpan Task"}
+        description={
+          mode === "edit"
+            ? "Apakah Anda yakin ingin menyimpan perubahan task ini?"
+            : "Apakah Anda yakin ingin menyimpan task ini?"
+        }
+        confirmText={mode === "edit" ? "Ya, Update" : "Ya, Simpan"}
+        cancelText="Batal"
+        confirmVariant="default"
+        isLoading={isSubmitting}
+        onConfirm={handleConfirmSubmit}
+        trigger={
+          <Button type="button" disabled={isSubmitting}>
+            {isSubmitting ? "Menyimpan..." : submitLabel}
+          </Button>
+        }
+      />
     </form>
   );
 }

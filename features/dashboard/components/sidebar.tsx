@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { LogoutButton } from "@/features/dashboard/components/logout-button";
-
 type SidebarProps = {
   email: string;
 };
@@ -24,9 +22,6 @@ export function Sidebar({ email }: SidebarProps) {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">Dashboard</p>
           <h1 className="mt-2 text-2xl tracking-tight">Daily Tracker</h1>
           <p className="mt-2 text-sm text-[#d9d9dd]">{email}</p>
-        </div>
-        <div className="lg:mt-5">
-          <LogoutButton />
         </div>
       </div>
 

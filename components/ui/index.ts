@@ -12,3 +12,4 @@ export {
   DialogDescription,
 } from "./dialog";
 export { ConfirmDialog } from "./confirm-dialog";
+export { ToastProvider, useToast } from "./toast";

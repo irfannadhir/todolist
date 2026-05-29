@@ -7,6 +7,7 @@ import { TaskCalendar } from "@/features/tasks/components/task-calendar";
 import { TaskList } from "@/features/tasks/components/task-list";
 import { TaskCreateSection } from "@/features/tasks/create/page";
 import { TaskDetailSection } from "@/features/tasks/detail/page";
+import { useToast } from "@/components/ui/toast";
 import {
   useCreateTask,
   useDeleteTask,
@@ -20,8 +21,10 @@ const EMPTY_TASKS: TaskItem[] = [];
 export default function TasksPage() {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedDates, setSelectedDates] = useState<Date[]>(() => [new Date()]);
   const [activeTask, setActiveTask] = useState<TaskItem | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   const filters = useMemo(
     () => ({ month: Number(format(monthDate, "M")), year: Number(format(monthDate, "yyyy")) }),
@@ -29,16 +32,60 @@ export default function TasksPage() {
   );
 
   const tasksQuery = useTasks(filters);
+  const selectedRange = useMemo(() => {
+    if (selectedDates.length <= 1) {
+      return null;
+    }
+
+    const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+    return {
+      dateFrom: format(sortedDates[0], "yyyy-MM-dd"),
+      dateTo: format(sortedDates[sortedDates.length - 1], "yyyy-MM-dd"),
+    };
+  }, [selectedDates]);
+
+  const groupedRangeTasksQuery = useTasks(
+    selectedRange
+      ? {
+          ...selectedRange,
+          groupBy: "recurring",
+        }
+      : undefined,
+    { enabled: Boolean(selectedRange) },
+  );
   const createMutation = useCreateTask(filters);
   const updateMutation = useUpdateTask(filters);
   const deleteMutation = useDeleteTask(filters);
 
   const tasks = tasksQuery.data ?? EMPTY_TASKS;
 
-  const selectedDateTasks = useMemo(
-    () => tasks.filter((task) => isSameDay(parseISO(task.dueDate), selectedDate)),
-    [tasks, selectedDate],
-  );
+  const selectedDateTasks = useMemo(() => {
+    if (selectedDates.length > 1) {
+      return groupedRangeTasksQuery.data ?? EMPTY_TASKS;
+    }
+
+    if (selectedDates.length <= 1) {
+      return tasks.filter((task) => isSameDay(parseISO(task.dueDate), selectedDate));
+    }
+    return EMPTY_TASKS;
+  }, [groupedRangeTasksQuery.data, selectedDate, selectedDates, tasks]);
+
+  const createFormDefaultValues = useMemo(() => {
+    if (selectedDates.length === 0) {
+      return undefined;
+    }
+
+    const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+    const firstDate = format(sortedDates[0], "yyyy-MM-dd");
+    const lastDate = format(sortedDates[sortedDates.length - 1], "yyyy-MM-dd");
+
+    return {
+      dueDate: firstDate,
+      dateFrom: firstDate,
+      dateTo: lastDate,
+      isRecurring: sortedDates.length > 1,
+    };
+  }, [selectedDates]);
 
   const resetError = () => setErrorMessage(null);
 
@@ -46,9 +93,18 @@ export default function TasksPage() {
     try {
       resetError();
       await createMutation.mutateAsync(payload);
-      setSelectedDate(parseISO(payload.dueDate));
+      const nextSelectedDate =
+        payload.isRecurring && payload.dateFrom ? payload.dateFrom : payload.dueDate;
+      setSelectedDate(parseISO(nextSelectedDate));
+      setSelectedDates([parseISO(nextSelectedDate)]);
+      toast.success({
+        title: "Task berhasil disimpan",
+        description: payload.isRecurring ? "Task berulang berhasil dibuat." : "Task baru berhasil dibuat.",
+      });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal membuat task");
+      const message = error instanceof Error ? error.message : "Gagal membuat task";
+      setErrorMessage(message);
+      toast.error({ title: "Gagal menyimpan task", description: message });
     }
   };
 
@@ -61,8 +117,11 @@ export default function TasksPage() {
       resetError();
       await updateMutation.mutateAsync({ id: activeTask.id, payload });
       setActiveTask(null);
+      toast.success({ title: "Task berhasil diperbarui" });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal memperbarui task");
+      const message = error instanceof Error ? error.message : "Gagal memperbarui task";
+      setErrorMessage(message);
+      toast.error({ title: "Gagal memperbarui task", description: message });
     }
   };
 
@@ -73,8 +132,11 @@ export default function TasksPage() {
       if (activeTask?.id === task.id) {
         setActiveTask(null);
       }
+      toast.success({ title: "Task berhasil dihapus" });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menghapus task");
+      const message = error instanceof Error ? error.message : "Gagal menghapus task";
+      setErrorMessage(message);
+      toast.error({ title: "Gagal menghapus task", description: message });
     }
   };
 
@@ -89,8 +151,11 @@ export default function TasksPage() {
         id: task.id,
         payload: { status },
       });
+      toast.success({ title: `Status task diubah ke ${status.replace("_", " ")}` });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal mengubah status task");
+      const message = error instanceof Error ? error.message : "Gagal mengubah status task";
+      setErrorMessage(message);
+      toast.error({ title: "Gagal mengubah status", description: message });
     }
   };
 
@@ -121,15 +186,21 @@ export default function TasksPage() {
         <TaskCalendar
           monthDate={monthDate}
           selectedDate={selectedDate}
+          selectedDates={selectedDates}
           tasks={tasks}
           onSelectDate={setSelectedDate}
+          onSelectDateRange={setSelectedDates}
           onChangeMonth={(value) => {
             const nextMonth = value === "next" ? addMonths(monthDate, 1) : subMonths(monthDate, 1);
             setMonthDate(nextMonth);
           }}
         />
 
-        <TaskCreateSection onSubmit={handleCreate} isSubmitting={createMutation.isPending} />
+        <TaskCreateSection
+          onSubmit={handleCreate}
+          isSubmitting={createMutation.isPending}
+          defaultValues={createFormDefaultValues}
+        />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
