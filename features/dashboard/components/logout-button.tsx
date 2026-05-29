@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
 export function LogoutButton() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -22,13 +25,13 @@ export function LogoutButton() {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      disabled={isLoading}
-      className="rounded-full border border-[#ffad9b] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#ffad9b] transition hover:bg-[#2b2b35] disabled:cursor-not-allowed disabled:opacity-70"
-    >
-      {isLoading ? "Keluar..." : "Logout"}
-    </button>
+    <ConfirmDialog
+      title="Logout"
+      description="Apakah Anda yakin ingin keluar dari akun ini?"
+      confirmText="Ya, Logout"
+      cancelText="Batal"
+      onConfirm={handleLogout}
+      trigger={<Button variant="destructive" size="sm">Logout</Button>}
+    />
   );
 }

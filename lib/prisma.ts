@@ -5,8 +5,9 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-const databaseUrl =
-  process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5432/todolist?schema=public";
+const databaseUrl = process.env.DATABASE_URL;
+
+console.log("databaseUrl", databaseUrl);
 
 const adapter = new PrismaPg({ connectionString: databaseUrl });
 

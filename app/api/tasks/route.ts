@@ -7,7 +7,10 @@ import {
   taskQuerySchema,
 } from "@/features/tasks/schemas/task-schema";
 import { type TaskStatus } from "@/features/tasks/types/task";
-import { getSessionFromRequest, unauthorizedJsonResponse } from "@/lib/auth-server";
+import {
+  getSessionFromRequest,
+  unauthorizedJsonResponse,
+} from "@/lib/auth-server";
 import { prisma } from "@/lib/prisma";
 
 const statusToDb: Record<TaskStatus, PrismaTaskStatus> = {
@@ -62,7 +65,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const queryObject = Object.fromEntries(request.nextUrl.searchParams.entries());
+    const queryObject = Object.fromEntries(
+      request.nextUrl.searchParams.entries(),
+    );
     const parsedQuery = taskQuerySchema.safeParse(queryObject);
 
     if (!parsedQuery.success) {
@@ -121,13 +126,19 @@ export async function POST(request: NextRequest) {
     const createdTask = await prisma.task.create({
       data: {
         title: payload.title,
-        description: payload.description?.trim() ? payload.description.trim() : null,
+        description: payload.description?.trim()
+          ? payload.description.trim()
+          : null,
         status: statusToDb[payload.status],
         dueDate: new Date(payload.dueDate),
+        userId: "cmpqvsluu0000ecv6e8cgdkc8",
       },
     });
 
-    return Response.json({ data: taskToResponse(createdTask) }, { status: 201 });
+    return Response.json(
+      { data: taskToResponse(createdTask) },
+      { status: 201 },
+    );
   } catch {
     return Response.json(
       { message: "Terjadi kesalahan saat membuat task" },

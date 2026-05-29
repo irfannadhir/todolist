@@ -1,3 +1,7 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TaskForm } from "@/features/tasks/components/task-form";
 import { StatusBadge } from "@/features/tasks/components/status-badge";
 import { type TaskItem, type TaskPayload } from "@/features/tasks/types/task";
@@ -23,7 +27,9 @@ export function TaskDetailSection({
         <h2 className="text-2xl tracking-tight text-[#17171c]">Detail Task</h2>
         <StatusBadge status={task.status} />
       </div>
-      <p className="mt-1 text-sm text-[#616161]">Perbarui status atau isi task sesuai progres terbaru.</p>
+      <p className="mt-1 text-sm text-[#616161]">
+        Perbarui status atau isi task sesuai progres terbaru.
+      </p>
 
       <div className="mt-5">
         <TaskForm
@@ -40,14 +46,16 @@ export function TaskDetailSection({
         />
       </div>
 
-      <button
-        type="button"
-        className="mt-4 inline-flex rounded-full border border-[#ff7759] px-4 py-2 text-sm font-medium text-[#ff7759] transition hover:bg-[#fff4ef] disabled:cursor-not-allowed disabled:opacity-60"
-        onClick={onDelete}
-        disabled={isDeleting}
-      >
-        {isDeleting ? "Menghapus..." : "Hapus Task"}
-      </button>
+      <div className="mt-4">
+        <ConfirmDialog
+          title="Hapus Task"
+          description={`Apakah Anda yakin ingin menghapus task "${task.title}"? Tindakan ini tidak dapat dibatalkan.`}
+          confirmText="Hapus"
+          isLoading={isDeleting}
+          onConfirm={onDelete}
+          trigger={<Button variant="destructive">Hapus Task</Button>}
+        />
+      </div>
     </section>
   );
 }

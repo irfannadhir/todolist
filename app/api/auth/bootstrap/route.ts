@@ -28,11 +28,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const name = parsedBody.data.name.trim();
     const email = parsedBody.data.email.toLowerCase();
     const passwordHash = await hashPassword(parsedBody.data.password);
 
     const createdUser = await prisma.user.create({
       data: {
+        name,
         email,
         passwordHash,
       },
@@ -61,6 +63,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch {
-    return Response.json({ message: "Terjadi kesalahan saat bootstrap user" }, { status: 500 });
+    return Response.json(
+      { message: "Terjadi kesalahan saat bootstrap user" },
+      { status: 500 },
+    );
   }
 }

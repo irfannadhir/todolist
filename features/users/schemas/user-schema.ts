@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 export const userPayloadSchema = z.object({
-  email: z.string().trim().email("Format email tidak valid"),
+  name: z.string().trim().min(1, "Nama wajib diisi"),
+  email: z.email("Format email tidak valid").trim(),
   password: z
     .string()
     .min(6, "Password minimal 6 karakter")
@@ -10,7 +11,10 @@ export const userPayloadSchema = z.object({
 
 export const userUpdatePayloadSchema = userPayloadSchema
   .partial()
-  .refine((payload) => Object.keys(payload).length > 0, "Minimal satu field harus diupdate");
+  .refine(
+    (payload) => Object.keys(payload).length > 0,
+    "Minimal satu field harus diupdate",
+  );
 
 export const loginSchema = z.object({
   email: z.string().trim().email("Format email tidak valid"),

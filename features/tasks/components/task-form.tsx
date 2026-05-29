@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Button } from "@/components/ui/button";
 import {
   taskPayloadSchema,
   taskStatusSchema,
@@ -55,8 +56,14 @@ export function TaskForm({
       description: defaultValues?.description ?? "",
       dueDate: defaultValues?.dueDate ?? "",
       status: defaultValues?.status ?? "pending",
+      dueTime: defaultValues?.dueTime ?? "",
+      dateFrom: defaultValues?.dateFrom ?? "",
+      dateTo: defaultValues?.dateTo ?? "",
+      isRecurring: defaultValues?.isRecurring ?? false,
     },
   });
+
+  const isRecurring = form.watch("isRecurring");
 
   const submitHandler = form.handleSubmit(async (values) => {
     const payload = {
@@ -64,11 +71,17 @@ export function TaskForm({
       description: values.description,
       dueDate: values.dueDate,
       status: values.status,
+      dueTime: values.dueTime,
+      dateFrom: values.dateFrom,
+      dateTo: values.dateTo,
+      isRecurring: values.isRecurring,
     } satisfies TaskPayload;
 
     if (mode === "edit") {
       const parsed = taskUpdatePayloadSchema.parse(payload);
-      await (onSubmit as (payload: Partial<TaskPayload>) => Promise<void>)(parsed);
+      await (onSubmit as (payload: Partial<TaskPayload>) => Promise<void>)(
+        parsed,
+      );
       return;
     }
 
@@ -79,6 +92,10 @@ export function TaskForm({
       description: "",
       dueDate: "",
       status: "pending",
+      dueTime: "",
+      dateFrom: "",
+      dateTo: "",
+      isRecurring: false,
     });
   });
 
@@ -91,17 +108,22 @@ export function TaskForm({
         <input
           id="title"
           type="text"
-          placeholder="Contoh: Update laporan sprint"
+          placeholder="Contoh: Minum Obat"
           className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
           {...form.register("title")}
         />
         {form.formState.errors.title ? (
-          <p className="text-xs text-[#b30000]">{form.formState.errors.title.message}</p>
+          <p className="text-xs text-[#b30000]">
+            {form.formState.errors.title.message}
+          </p>
         ) : null}
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="description" className="text-sm font-medium text-[#212121]">
+        <label
+          htmlFor="description"
+          className="text-sm font-medium text-[#212121]"
+        >
           Deskripsi
         </label>
         <textarea
@@ -112,13 +134,18 @@ export function TaskForm({
           {...form.register("description")}
         />
         {form.formState.errors.description ? (
-          <p className="text-xs text-[#b30000]">{form.formState.errors.description.message}</p>
+          <p className="text-xs text-[#b30000]">
+            {form.formState.errors.description.message}
+          </p>
         ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1">
-          <label htmlFor="dueDate" className="text-sm font-medium text-[#212121]">
+          <label
+            htmlFor="dueDate"
+            className="text-sm font-medium text-[#212121]"
+          >
             Tanggal
           </label>
           <input
@@ -128,35 +155,94 @@ export function TaskForm({
             {...form.register("dueDate")}
           />
           {form.formState.errors.dueDate ? (
-            <p className="text-xs text-[#b30000]">{form.formState.errors.dueDate.message}</p>
+            <p className="text-xs text-[#b30000]">
+              {form.formState.errors.dueDate.message}
+            </p>
           ) : null}
         </div>
 
         <div className="space-y-1">
-          <label htmlFor="status" className="text-sm font-medium text-[#212121]">
-            Status
-          </label>
-          <select
-            id="status"
-            className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
-            {...form.register("status")}
+          <label
+            htmlFor="dueTime"
+            className="text-sm font-medium text-[#212121]"
           >
-            {TASK_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {statusLabelMap[status]}
-              </option>
-            ))}
-          </select>
+            Waktu Reminder
+          </label>
+          <input
+            id="dueTime"
+            type="time"
+            className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
+            {...form.register("dueTime")}
+          />
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="inline-flex rounded-full bg-[#17171c] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003c33] disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={isSubmitting}
-      >
+      <div className="flex items-center gap-2">
+        <input
+          id="isRecurring"
+          type="checkbox"
+          {...form.register("isRecurring")}
+          className="h-4 w-4 rounded border-[#d9d9dd] text-[#17171c] focus:ring-[#4c6ee6]"
+        />
+        <label htmlFor="isRecurring" className="text-sm text-[#212121]">
+          Task Berulang (Date Range)
+        </label>
+      </div>
+
+      {isRecurring && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <label
+              htmlFor="dateFrom"
+              className="text-sm font-medium text-[#212121]"
+            >
+              Dari Tanggal
+            </label>
+            <input
+              id="dateFrom"
+              type="date"
+              className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
+              {...form.register("dateFrom")}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label
+              htmlFor="dateTo"
+              className="text-sm font-medium text-[#212121]"
+            >
+              Sampai Tanggal
+            </label>
+            <input
+              id="dateTo"
+              type="date"
+              className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
+              {...form.register("dateTo")}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-1">
+        <label htmlFor="status" className="text-sm font-medium text-[#212121]">
+          Status
+        </label>
+        <select
+          id="status"
+          className="w-full rounded-md border border-[#d9d9dd] bg-white px-3 py-2 text-sm text-[#17171c] outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
+          {...form.register("status")}
+        >
+          {TASK_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {statusLabelMap[status]}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Menyimpan..." : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

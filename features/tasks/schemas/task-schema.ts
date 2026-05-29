@@ -17,6 +17,10 @@ export const taskPayloadSchema = z.object({
     .string()
     .min(1, "Tanggal wajib diisi")
     .refine((value) => !Number.isNaN(Date.parse(value)), "Format tanggal tidak valid"),
+  dueTime: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  isRecurring: z.boolean().optional().default(false),
 });
 
 export const taskUpdatePayloadSchema = taskPayloadSchema.partial().refine(

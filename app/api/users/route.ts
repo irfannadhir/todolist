@@ -2,17 +2,22 @@ import { type NextRequest } from "next/server";
 
 import { userPayloadSchema } from "@/features/users/schemas/user-schema";
 import { hashPassword } from "@/lib/auth";
-import { getSessionFromRequest, unauthorizedJsonResponse } from "@/lib/auth-server";
+import {
+  getSessionFromRequest,
+  unauthorizedJsonResponse,
+} from "@/lib/auth-server";
 import { prisma } from "@/lib/prisma";
 
 function sanitizeUser(user: {
   id: string;
+  name: string;
   email: string;
   createdAt: Date;
   updatedAt: Date;
 }) {
   return {
     id: user.id,
+    name: user.name,
     email: user.email,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
@@ -33,7 +38,10 @@ export async function GET(request: NextRequest) {
 
     return Response.json({ data: users.map(sanitizeUser) });
   } catch {
-    return Response.json({ message: "Terjadi kesalahan saat mengambil data user" }, { status: 500 });
+    return Response.json(
+      { message: "Terjadi kesalahan saat mengambil data user" },
+      { status: 500 },
+    );
   }
 }
 
@@ -58,19 +66,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const name = parsedBody.data.name.trim();
     const email = parsedBody.data.email.toLowerCase();
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      return Response.json({ message: "Email sudah digunakan" }, { status: 409 });
+      return Response.json(
+        { message: "Email sudah digunakan" },
+        { status: 409 },
+      );
     }
 
     const passwordHash = await hashPassword(parsedBody.data.password);
 
     const createdUser = await prisma.user.create({
       data: {
+        name,
         email,
         passwordHash,
       },
@@ -78,6 +91,9 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ data: sanitizeUser(createdUser) }, { status: 201 });
   } catch {
-    return Response.json({ message: "Terjadi kesalahan saat membuat user" }, { status: 500 });
+    return Response.json(
+      { message: "Terjadi kesalahan saat membuat user" },
+      { status: 500 },
+    );
   }
 }

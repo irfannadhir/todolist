@@ -3,9 +3,20 @@
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { UserForm } from "@/features/users/components/user-form";
-import { useCreateUser, useDeleteUser, useUpdateUser, useUsers } from "@/features/users/hooks/use-users";
-import { type UserItem, type UserPayload, type UserUpdatePayload } from "@/features/users/types/user";
+import {
+  useCreateUser,
+  useDeleteUser,
+  useUpdateUser,
+  useUsers,
+} from "@/features/users/hooks/use-users";
+import {
+  type UserItem,
+  type UserPayload,
+  type UserUpdatePayload,
+} from "@/features/users/types/user";
 
 const EMPTY_USERS: UserItem[] = [];
 
@@ -27,7 +38,9 @@ export default function UsersPage() {
       resetError();
       await createMutation.mutateAsync(payload);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal membuat user");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Gagal membuat user",
+      );
     }
   };
 
@@ -41,7 +54,9 @@ export default function UsersPage() {
       await updateMutation.mutateAsync({ id: selectedUser.id, payload });
       setSelectedUser(null);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal mengupdate user");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Gagal mengupdate user",
+      );
     }
   };
 
@@ -53,15 +68,21 @@ export default function UsersPage() {
         setSelectedUser(null);
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menghapus user");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Gagal menghapus user",
+      );
     }
   };
 
   return (
     <div className="space-y-6">
       <section className="rounded-[22px] bg-[#003c33] p-6 text-white sm:p-8">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">User Management</p>
-        <h1 className="mt-2 text-4xl leading-tight tracking-tight sm:text-5xl">Kelola User</h1>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">
+          User Management
+        </p>
+        <h1 className="mt-2 text-4xl leading-tight tracking-tight sm:text-5xl">
+          Kelola User
+        </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#edfce9] sm:text-base">
           CRUD user menggunakan email dan password untuk akses login dashboard.
         </p>
@@ -75,8 +96,12 @@ export default function UsersPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-[22px] border border-[#d9d9dd] bg-white p-6">
-          <h2 className="text-2xl tracking-tight text-[#17171c]">Daftar User</h2>
-          <p className="mt-1 text-sm text-[#616161]">Klik edit untuk update email/password user.</p>
+          <h2 className="text-2xl tracking-tight text-[#17171c]">
+            Daftar User
+          </h2>
+          <p className="mt-1 text-sm text-[#616161]">
+            Klik edit untuk update email/password user.
+          </p>
 
           {users.length === 0 ? (
             <div className="mt-6 rounded-md border border-dashed border-[#d9d9dd] bg-[#f8f8f8] p-5 text-sm text-[#616161]">
@@ -87,6 +112,7 @@ export default function UsersPage() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-[#e5e7eb] text-left text-[#75758a]">
+                    <th className="py-2 pr-3 font-medium">Nama</th>
                     <th className="py-2 pr-3 font-medium">Email</th>
                     <th className="py-2 pr-3 font-medium">Created</th>
                     <th className="py-2 font-medium">Aksi</th>
@@ -95,27 +121,31 @@ export default function UsersPage() {
                 <tbody>
                   {users.map((user) => (
                     <tr key={user.id} className="border-b border-[#f1f1f1]">
+                      <td className="py-3 pr-3 text-[#17171c]">{user.name}</td>
                       <td className="py-3 pr-3 text-[#17171c]">{user.email}</td>
                       <td className="py-3 pr-3 text-[#616161]">
                         {format(parseISO(user.createdAt), "dd MMM yyyy HH:mm")}
                       </td>
                       <td className="py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            className="rounded-full bg-[#17171c] px-3 py-1 text-xs font-medium text-white transition hover:bg-[#003c33]"
+                          <Button
+                            size="sm"
                             onClick={() => setSelectedUser(user)}
                           >
                             Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-full border border-[#ff7759] px-3 py-1 text-xs font-medium text-[#ff7759] transition hover:bg-[#fff4ef]"
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            Hapus
-                          </button>
+                          </Button>
+                          <ConfirmDialog
+                            title="Hapus User"
+                            description={`Apakah Anda yakin ingin menghapus user "${user.email}"? Tindakan ini tidak dapat dibatalkan.`}
+                            confirmText="Hapus"
+                            isLoading={deleteMutation.isPending}
+                            onConfirm={() => handleDeleteUser(user.id)}
+                            trigger={
+                              <Button variant="destructive" size="sm">
+                                Hapus
+                              </Button>
+                            }
+                          />
                         </div>
                       </td>
                     </tr>
@@ -128,8 +158,12 @@ export default function UsersPage() {
 
         <div className="space-y-6">
           <section className="rounded-[22px] border border-[#d9d9dd] bg-white p-6">
-            <h2 className="text-2xl tracking-tight text-[#17171c]">Buat User Baru</h2>
-            <p className="mt-1 text-sm text-[#616161]">User baru bisa langsung dipakai untuk login.</p>
+            <h2 className="text-2xl tracking-tight text-[#17171c]">
+              Buat User Baru
+            </h2>
+            <p className="mt-1 text-sm text-[#616161]">
+              User baru bisa langsung dipakai untuk login.
+            </p>
             <div className="mt-5">
               <UserForm
                 mode="create"
@@ -141,15 +175,23 @@ export default function UsersPage() {
           </section>
 
           <section className="rounded-[22px] border border-[#d9d9dd] bg-white p-6">
-            <h2 className="text-2xl tracking-tight text-[#17171c]">Edit User</h2>
+            <h2 className="text-2xl tracking-tight text-[#17171c]">
+              Edit User
+            </h2>
             {selectedUser ? (
               <>
-                <p className="mt-1 text-sm text-[#616161]">User aktif: {selectedUser.email}</p>
+                <p className="mt-1 text-sm text-[#616161]">
+                  User aktif: {selectedUser.name} ({selectedUser.email})
+                </p>
                 <div className="mt-5">
                   <UserForm
                     key={selectedUser.id}
                     mode="edit"
-                    defaultValues={{ email: selectedUser.email, password: "" }}
+                    defaultValues={{
+                      name: selectedUser.name,
+                      email: selectedUser.email,
+                      password: "",
+                    }}
                     onSubmit={handleUpdateUser}
                     isSubmitting={updateMutation.isPending}
                     submitLabel="Update User"
@@ -157,7 +199,9 @@ export default function UsersPage() {
                 </div>
               </>
             ) : (
-              <p className="mt-2 text-sm text-[#616161]">Pilih user dari tabel untuk edit.</p>
+              <p className="mt-2 text-sm text-[#616161]">
+                Pilih user dari tabel untuk edit.
+              </p>
             )}
           </section>
         </div>
