@@ -1,0 +1,34 @@
+Use: 
+FE:
+- tailwind
+- zod for validate
+- react hook form
+- tanstack
+
+BE:
+- Prisma
+- Zod
+- Postgresql
+
+Style like:
+use file DESIGN.md
+
+Structure folder:
+/app
+   /users
+      page.tsx
+
+/features
+   /components #for global component
+   /users
+      /hooks
+      /services #for api call
+      /schemas #for zod
+      /components
+         use-users.tsx
+      /types
+      /create
+         page.tsx
+      /detail
+         page.tsx
+      page.tsx
