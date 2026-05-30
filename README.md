@@ -72,11 +72,11 @@ npm run dev
 - `npm run db:migrate`
 - `npm run db:studio`
 
-## Cron Reminder Email (Resend)
+## Cron Reminder Email (Resend + cron-job.org)
 
 Tambahkan konfigurasi berikut di `.env`:
 
-- `CRON_SECRET` (wajib di Vercel production)
+- `CRON_SECRET` (wajib di production)
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `TASK_REMINDER_TIMEZONE` (default: `Asia/Jakarta`)
@@ -85,8 +85,11 @@ Tambahkan konfigurasi berikut di `.env`:
 Perilaku:
 
 - Scheduler akan mencari task user yang jatuh tempo hari ini (UTC date) dengan status `PENDING`, `ON_PROGRESS`, atau `HOLD`.
+- Email hanya dikirim untuk task dengan `dueTime` yang sama persis dengan waktu saat endpoint dipanggil (format `HH:mm` pada timezone `TASK_REMINDER_TIMEZONE`).
 - Email pengingat dikirim per user ke email akun masing-masing.
 - Pengiriman memakai Resend Node SDK (`resend.emails.send`) dengan React template di `components/email-template.mjs`.
-- Cron dijalankan oleh Vercel Cron dengan konfigurasi di `vercel.json` (1x sehari ke `GET /api/cron/task-reminder`).
-- Endpoint cron memverifikasi header `Authorization: Bearer <CRON_SECRET>`.
-- Jadwal Vercel Cron selalu berbasis UTC.
+- Endpoint cron: `GET /api/cron/task-reminder`.
+- Trigger cron dijalankan oleh external scheduler (misalnya `cron-job.org`), bukan Vercel Cron.
+- Endpoint memverifikasi secret dari:
+  - Header `Authorization: Bearer <CRON_SECRET>`, atau
+  - Query param `?secret=<CRON_SECRET>`.

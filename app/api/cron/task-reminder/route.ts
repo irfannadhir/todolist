@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 
-import { runTaskReminderJob } from "@/lib/task-reminder-scheduler.mjs";
+import { runTaskReminderJob } from "@/lib/task-reminder-scheduler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,13 +13,18 @@ function isAuthorized(request: NextRequest) {
   }
 
   const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${secret}`;
+  if (authHeader === `Bearer ${secret}`) {
+    return true;
+  }
+
+  const querySecret = request.nextUrl.searchParams.get("secret");
+  return querySecret === secret;
 }
 
 export async function GET(request: NextRequest) {
-  // if (!isAuthorized(request)) {
-  //   return Response.json({ message: "Unauthorized" }, { status: 401 });
-  // }
+  if (!isAuthorized(request)) {
+    return Response.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const summary = await runTaskReminderJob();

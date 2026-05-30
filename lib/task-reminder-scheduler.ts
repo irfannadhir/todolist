@@ -6,18 +6,39 @@ import { Resend } from "resend";
 import { EmailTemplate } from "../components/email-template.mjs";
 
 const databaseUrl = process.env.DATABASE_URL;
-const REMINDER_STATUSES = [
+const REMINDER_STATUSES: TaskStatus[] = [
   TaskStatus.PENDING,
   TaskStatus.ON_PROGRESS,
   TaskStatus.HOLD,
 ];
 const TIMEZONE = process.env.TASK_REMINDER_TIMEZONE ?? "Asia/Jakarta";
-const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL ?? "Daily Tracker <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "Daily Tracker <onboarding@resend.dev>";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const DRY_RUN = process.env.TASK_REMINDER_DRY_RUN === "true";
 
-let prisma;
+let prisma: PrismaClient | undefined;
+
+type ReminderSummary = {
+  timestamp: string;
+  users: number;
+  sent: number;
+  failed: number;
+  dueTime: string;
+};
+
+type UserTaskGroup = {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  tasks: {
+    title: string;
+    description: string | null;
+    status: TaskStatus;
+    dueTime: string | null;
+  }[];
+};
 
 function getPrismaClient() {
   if (prisma) {
@@ -35,29 +56,40 @@ function getPrismaClient() {
 
 function getTodayUtcRange(now = new Date()) {
   const start = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      0,
-      0,
-      0,
-      0,
-    ),
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
   );
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 1);
   return { start, end };
 }
 
-function formatTaskDate(date) {
+function formatTaskDate(date: Date) {
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "full",
     timeZone: TIMEZONE,
   }).format(date);
 }
 
-async function buildEmailPayload({ name, email, tasks, dueDateLabel }) {
+function getCurrentTimeInTimezone(now = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: TIMEZONE,
+  }).format(now);
+}
+
+async function buildEmailPayload({
+  name,
+  email,
+  tasks,
+  dueDateLabel,
+}: {
+  name: string;
+  email: string;
+  tasks: UserTaskGroup["tasks"];
+  dueDateLabel: string;
+}) {
   const subject = `Pengingat Task Anda - ${dueDateLabel}`;
   const reactTemplate = EmailTemplate({
     firstName: name,
@@ -79,13 +111,13 @@ async function buildEmailPayload({ name, email, tasks, dueDateLabel }) {
   };
 }
 
-async function sendWithResend(payload, idempotencyKey) {
+async function sendWithResend(payload: Awaited<ReturnType<typeof buildEmailPayload>>, idempotencyKey: string) {
   if (!RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY belum di-set di environment.");
   }
 
   const resend = new Resend(RESEND_API_KEY);
-  const { data, error } = await resend.emails.send(payload);
+  const { data, error } = await resend.emails.send(payload, { idempotencyKey });
 
   if (error) {
     throw new Error(`Resend API error: ${JSON.stringify(error)}`);
@@ -94,10 +126,11 @@ async function sendWithResend(payload, idempotencyKey) {
   return data;
 }
 
-export async function runTaskReminderJob() {
+export async function runTaskReminderJob(): Promise<ReminderSummary> {
   const client = getPrismaClient();
   const now = new Date();
   const { start, end } = getTodayUtcRange(now);
+  const currentTime = getCurrentTimeInTimezone(now);
 
   const tasks = await client.task.findMany({
     where: {
@@ -105,6 +138,7 @@ export async function runTaskReminderJob() {
         gte: start,
         lt: end,
       },
+      dueTime: currentTime,
       status: {
         in: REMINDER_STATUSES,
       },
@@ -121,10 +155,10 @@ export async function runTaskReminderJob() {
         },
       },
     },
-    orderBy: [{ userId: "asc" }, { dueTime: "asc" }, { title: "asc" }],
+    orderBy: [{ userId: "asc" }, { title: "asc" }],
   });
 
-  const groupedByUser = new Map();
+  const groupedByUser = new Map<string, UserTaskGroup>();
 
   for (const task of tasks) {
     if (!task.user) {
@@ -132,15 +166,21 @@ export async function runTaskReminderJob() {
     }
 
     const existing = groupedByUser.get(task.user.id);
+    const mappedTask = {
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      dueTime: task.dueTime,
+    };
 
     if (existing) {
-      existing.tasks.push(task);
+      existing.tasks.push(mappedTask);
       continue;
     }
 
     groupedByUser.set(task.user.id, {
       user: task.user,
-      tasks: [task],
+      tasks: [mappedTask],
     });
   }
 
@@ -156,18 +196,14 @@ export async function runTaskReminderJob() {
       dueDateLabel,
     });
 
-    const idempotencyKey = `task-reminder/${userId}/${start.toISOString().slice(0, 10)}`;
+    const idempotencyKey = `task-reminder/${userId}/${start.toISOString().slice(0, 10)}/${currentTime}`;
 
     try {
       if (DRY_RUN) {
-        console.log(
-          `[DRY_RUN] Skip sending email to ${user.email} (${userTasks.length} task).`,
-        );
+        console.log(`[DRY_RUN] Skip sending email to ${user.email} (${userTasks.length} task).`);
       } else {
         await sendWithResend(payload, idempotencyKey);
-        console.log(
-          `Email reminder sent to ${user.email} (${userTasks.length} task).`,
-        );
+        console.log(`Email reminder sent to ${user.email} (${userTasks.length} task).`);
       }
       sent += 1;
     } catch (error) {
@@ -177,15 +213,16 @@ export async function runTaskReminderJob() {
     }
   }
 
-  const summary = {
+  const summary: ReminderSummary = {
     timestamp: now.toISOString(),
     users: groupedByUser.size,
     sent,
     failed,
+    dueTime: currentTime,
   };
 
   console.log(
-    `[TaskReminder] ${summary.timestamp} | users=${summary.users} | sent=${summary.sent} | failed=${summary.failed}`,
+    `[TaskReminder] ${summary.timestamp} | dueTime=${summary.dueTime} | users=${summary.users} | sent=${summary.sent} | failed=${summary.failed}`,
   );
 
   return summary;
