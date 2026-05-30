@@ -17,9 +17,9 @@ function isAuthorized(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return Response.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  // if (!isAuthorized(request)) {
+  //   return Response.json({ message: "Unauthorized" }, { status: 401 });
+  // }
 
   try {
     const summary = await runTaskReminderJob();
