@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -8,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function LogoutButton() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
@@ -17,6 +19,8 @@ export function LogoutButton() {
       await fetch("/api/auth/logout", {
         method: "POST",
       });
+      await queryClient.cancelQueries();
+      queryClient.clear();
       router.replace("/login");
       router.refresh();
     } finally {

@@ -3,10 +3,10 @@
 import { addMonths, format, isSameDay, parseISO, subMonths } from "date-fns";
 import { useMemo, useState } from "react";
 
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui";
 import { TaskCalendar } from "@/features/tasks/components/task-calendar";
+import { TaskForm } from "@/features/tasks/components/task-form";
 import { TaskList } from "@/features/tasks/components/task-list";
-import { TaskCreateSection } from "@/features/tasks/create/page";
-import { TaskDetailSection } from "@/features/tasks/detail/page";
 import { useToast } from "@/components/ui/toast";
 import {
   useCreateTask,
@@ -23,6 +23,7 @@ export default function TasksPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedDates, setSelectedDates] = useState<Date[]>(() => [new Date()]);
   const [activeTask, setActiveTask] = useState<TaskItem | null>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const toast = useToast();
 
@@ -87,6 +88,31 @@ export default function TasksPage() {
     };
   }, [selectedDates]);
 
+  const editFormDefaultValues = useMemo(() => {
+    if (!activeTask) {
+      return undefined;
+    }
+
+    return {
+      title: activeTask.title,
+      description: activeTask.description ?? "",
+      status: activeTask.status,
+      dueDate: activeTask.dueDate.slice(0, 10),
+      dueTime: activeTask.dueTime ?? "",
+      dateFrom: activeTask.dateFrom?.slice(0, 10) ?? "",
+      dateTo: activeTask.dateTo?.slice(0, 10) ?? "",
+      isRecurring: activeTask.isRecurring,
+    };
+  }, [activeTask]);
+
+  const taskFormKey = useMemo(() => {
+    if (activeTask) {
+      return `edit-${activeTask.id}`;
+    }
+
+    return `create-${createFormDefaultValues?.dueDate ?? ""}-${createFormDefaultValues?.dateFrom ?? ""}-${createFormDefaultValues?.dateTo ?? ""}-${String(createFormDefaultValues?.isRecurring ?? false)}`;
+  }, [activeTask, createFormDefaultValues]);
+
   const resetError = () => setErrorMessage(null);
 
   const handleCreate = async (payload: TaskPayload) => {
@@ -97,6 +123,7 @@ export default function TasksPage() {
         payload.isRecurring && payload.dateFrom ? payload.dateFrom : payload.dueDate;
       setSelectedDate(parseISO(nextSelectedDate));
       setSelectedDates([parseISO(nextSelectedDate)]);
+      setIsTaskModalOpen(false);
       toast.success({
         title: "Task berhasil disimpan",
         description: payload.isRecurring ? "Task berulang berhasil dibuat." : "Task baru berhasil dibuat.",
@@ -117,6 +144,7 @@ export default function TasksPage() {
       resetError();
       await updateMutation.mutateAsync({ id: activeTask.id, payload });
       setActiveTask(null);
+      setIsTaskModalOpen(false);
       toast.success({ title: "Task berhasil diperbarui" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Gagal memperbarui task";
@@ -159,15 +187,30 @@ export default function TasksPage() {
     }
   };
 
+  const openCreateModal = () => {
+    setActiveTask(null);
+    setIsTaskModalOpen(true);
+  };
+
+  const openEditModal = (task: TaskItem) => {
+    setActiveTask(task);
+    setIsTaskModalOpen(true);
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
       <section className="rounded-[22px] bg-[#003c33] p-6 text-white sm:p-8">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">Daily Tracker</p>
-        <h1 className="mt-2 text-4xl leading-tight tracking-tight sm:text-5xl">Tasklist Harian</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#edfce9] sm:text-base">
-          Kelola pekerjaan harian dengan status terstruktur: pending, on progress, hold, dan done.
-          Gunakan kalender untuk melihat ritme kerja setiap tanggal.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">Daily Tracker</p>
+            <h1 className="mt-2 text-4xl leading-tight tracking-tight sm:text-5xl">Tasklist Harian</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#edfce9] sm:text-base">
+              Kelola pekerjaan harian dengan status terstruktur: pending, on progress, hold, dan done.
+              Gunakan kalender untuk melihat ritme kerja setiap tanggal.
+            </p>
+          </div>
+          <Button onClick={openCreateModal}>Tambah Task</Button>
+        </div>
       </section>
 
       {errorMessage ? (
@@ -182,7 +225,7 @@ export default function TasksPage() {
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="mt-6">
         <TaskCalendar
           monthDate={monthDate}
           selectedDate={selectedDate}
@@ -195,43 +238,59 @@ export default function TasksPage() {
             setMonthDate(nextMonth);
           }}
         />
-
-        <TaskCreateSection
-          onSubmit={handleCreate}
-          isSubmitting={createMutation.isPending}
-          defaultValues={createFormDefaultValues}
-        />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="mt-6">
         <TaskList
           tasks={selectedDateTasks}
-          onEdit={setActiveTask}
+          onEdit={openEditModal}
           onDelete={handleDelete}
           onQuickStatusChange={handleQuickStatusChange}
         />
-
-        {activeTask ? (
-          <TaskDetailSection
-            task={activeTask}
-            onSubmit={handleUpdate}
-            onDelete={() => handleDelete(activeTask)}
-            isUpdating={updateMutation.isPending}
-            isDeleting={deleteMutation.isPending}
-          />
-        ) : (
-          <section className="rounded-[22px] border border-[#d9d9dd] bg-white p-6">
-            <h2 className="text-2xl tracking-tight text-[#17171c]">Detail Task</h2>
-            <p className="mt-1 text-sm text-[#616161]">
-              Klik tombol edit pada task untuk membuka detail dan memperbarui data.
-            </p>
-          </section>
-        )}
       </div>
 
       {(tasksQuery.isLoading || createMutation.isPending || updateMutation.isPending) && (
         <p className="mt-4 text-sm text-[#616161]">Memproses data task...</p>
       )}
+
+      <Dialog
+        open={isTaskModalOpen}
+        onOpenChange={(open) => {
+          setIsTaskModalOpen(open);
+          if (!open) {
+            setActiveTask(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{activeTask ? "Edit Task" : "Tambah Task"}</DialogTitle>
+            <DialogDescription>
+              {activeTask
+                ? "Perbarui detail task sesuai progres terbaru."
+                : "Isi detail task lalu simpan ke agenda harian."}
+            </DialogDescription>
+          </DialogHeader>
+          {activeTask ? (
+            <TaskForm
+              key={taskFormKey}
+              mode="edit"
+              defaultValues={editFormDefaultValues}
+              onSubmit={handleUpdate}
+              isSubmitting={updateMutation.isPending}
+              submitLabel="Update Task"
+            />
+          ) : (
+            <TaskForm
+              key={taskFormKey}
+              defaultValues={createFormDefaultValues}
+              onSubmit={handleCreate}
+              isSubmitting={createMutation.isPending}
+              submitLabel="Simpan Task"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

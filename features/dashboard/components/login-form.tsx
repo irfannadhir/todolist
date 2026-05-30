@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,6 +17,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBootstrapMode, setIsBootstrapMode] = useState(false);
 
@@ -48,6 +50,8 @@ export function LoginForm() {
       return;
     }
 
+    await queryClient.cancelQueries();
+    queryClient.clear();
     router.replace("/dashboard/tasks");
     router.refresh();
   });
@@ -81,6 +85,8 @@ export function LoginForm() {
       return;
     }
 
+    await queryClient.cancelQueries();
+    queryClient.clear();
     router.replace("/dashboard/tasks");
     router.refresh();
   });

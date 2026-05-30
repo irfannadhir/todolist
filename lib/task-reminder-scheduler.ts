@@ -12,7 +12,8 @@ const REMINDER_STATUSES: TaskStatus[] = [
   TaskStatus.HOLD,
 ];
 const TIMEZONE = process.env.TASK_REMINDER_TIMEZONE ?? "Asia/Jakarta";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "Daily Tracker <onboarding@resend.dev>";
+const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL ?? "Daily Tracker <onboarding@resend.dev>";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const DRY_RUN = process.env.TASK_REMINDER_DRY_RUN === "true";
 
@@ -56,7 +57,15 @@ function getPrismaClient() {
 
 function getTodayUtcRange(now = new Date()) {
   const start = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0,
+      0,
+      0,
+      0,
+    ),
   );
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 1);
@@ -111,7 +120,10 @@ async function buildEmailPayload({
   };
 }
 
-async function sendWithResend(payload: Awaited<ReturnType<typeof buildEmailPayload>>, idempotencyKey: string) {
+async function sendWithResend(
+  payload: Awaited<ReturnType<typeof buildEmailPayload>>,
+  idempotencyKey: string,
+) {
   if (!RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY belum di-set di environment.");
   }
@@ -161,6 +173,7 @@ export async function runTaskReminderJob(): Promise<ReminderSummary> {
   const groupedByUser = new Map<string, UserTaskGroup>();
 
   for (const task of tasks) {
+    console.log("task", task);
     if (!task.user) {
       continue;
     }
@@ -200,10 +213,14 @@ export async function runTaskReminderJob(): Promise<ReminderSummary> {
 
     try {
       if (DRY_RUN) {
-        console.log(`[DRY_RUN] Skip sending email to ${user.email} (${userTasks.length} task).`);
+        console.log(
+          `[DRY_RUN] Skip sending email to ${user.email} (${userTasks.length} task).`,
+        );
       } else {
         await sendWithResend(payload, idempotencyKey);
-        console.log(`Email reminder sent to ${user.email} (${userTasks.length} task).`);
+        console.log(
+          `Email reminder sent to ${user.email} (${userTasks.length} task).`,
+        );
       }
       sent += 1;
     } catch (error) {
