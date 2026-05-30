@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // const name = parsedBody.data.name.trim();
+    const name = parsedBody.data.name.trim();
     const email = parsedBody.data.email.toLowerCase();
     const passwordHash = await hashPassword(parsedBody.data.password);
 
     const createdUser = await prisma.user.create({
       data: {
-        name: "Irfan Nadhir",
+        name,
         email,
         passwordHash,
       },

@@ -9,16 +9,20 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { loginSchema } from "@/features/users/schemas/user-schema";
 
-const formSchema = loginSchema;
+const formSchema = loginSchema.extend({
+  name: z.string().trim().optional(),
+});
 type FormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isBootstrapMode, setIsBootstrapMode] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
@@ -51,12 +55,18 @@ export function LoginForm() {
   const bootstrapHandler = form.handleSubmit(async (values) => {
     setErrorMessage(null);
 
+    if (!values.name?.trim()) {
+      form.setError("name", { message: "Nama wajib diisi untuk user pertama" });
+      return;
+    }
+
     const response = await fetch("/api/auth/bootstrap", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        name: values.name.trim(),
         email: values.email,
         password: values.password,
       }),
@@ -84,7 +94,9 @@ export function LoginForm() {
         Login Dashboard
       </h1>
       <p className="mt-2 text-sm text-[#616161]">
-        Masuk menggunakan email dan password user yang sudah terdaftar.
+        {isBootstrapMode
+          ? "Isi nama, email, dan password untuk membuat user pertama."
+          : "Masuk menggunakan email dan password user yang sudah terdaftar."}
       </p>
 
       {errorMessage ? (
@@ -94,6 +106,25 @@ export function LoginForm() {
       ) : null}
 
       <form onSubmit={submitHandler} className="mt-5 space-y-4">
+        {isBootstrapMode ? (
+          <div className="space-y-1">
+            <label htmlFor="name" className="text-sm font-medium text-[#212121]">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              className="w-full rounded-md border border-[#d9d9dd] px-3 py-2 text-sm outline-none transition focus:border-[#4c6ee6] focus:ring-2 focus:ring-[#4c6ee6]/30"
+              {...form.register("name")}
+            />
+            {form.formState.errors.name ? (
+              <p className="text-xs text-[#b30000]">
+                {form.formState.errors.name.message}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="space-y-1">
           <label htmlFor="email" className="text-sm font-medium text-[#212121]">
             Email
@@ -139,12 +170,29 @@ export function LoginForm() {
             type="button"
             variant="outline"
             onClick={() => {
+              if (!isBootstrapMode) {
+                setIsBootstrapMode(true);
+                return;
+              }
               void bootstrapHandler();
             }}
             disabled={form.formState.isSubmitting}
           >
             Buat User Pertama
           </Button>
+          {isBootstrapMode ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setIsBootstrapMode(false);
+                form.clearErrors("name");
+              }}
+              disabled={form.formState.isSubmitting}
+            >
+              Batal
+            </Button>
+          ) : null}
         </div>
       </form>
     </section>
