@@ -1,4 +1,5 @@
 import { type UserItem, type UserPayload, type UserUpdatePayload } from "@/features/users/types/user";
+import { getAuthorizationHeader } from "@/lib/auth-client";
 
 const API_BASE = "/api/users";
 
@@ -8,9 +9,11 @@ type ApiResponse<T> = {
 };
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  const authorizationHeader = getAuthorizationHeader();
   const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
+      ...authorizationHeader,
       ...(init?.headers ?? {}),
     },
     ...init,

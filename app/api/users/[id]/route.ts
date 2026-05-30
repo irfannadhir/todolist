@@ -4,7 +4,7 @@ import { type NextRequest } from "next/server";
 import { userUpdatePayloadSchema } from "@/features/users/schemas/user-schema";
 import { hashPassword } from "@/lib/auth";
 import {
-  getSessionFromRequest,
+  getSessionFromAuthHeaders,
   unauthorizedJsonResponse,
 } from "@/lib/auth-server";
 import { prisma } from "@/lib/prisma";
@@ -30,7 +30,7 @@ type RouteContext = {
 };
 
 export async function GET(request: NextRequest, context: RouteContext) {
-  const session = await getSessionFromRequest(request);
+  const session = getSessionFromAuthHeaders(request);
 
   if (!session) {
     return unauthorizedJsonResponse();
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  const session = await getSessionFromRequest(request);
+  const session = getSessionFromAuthHeaders(request);
 
   if (!session) {
     return unauthorizedJsonResponse();
@@ -122,7 +122,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  const session = await getSessionFromRequest(request);
+  const session = getSessionFromAuthHeaders(request);
 
   if (!session) {
     return unauthorizedJsonResponse();

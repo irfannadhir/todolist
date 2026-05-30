@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { loginSchema } from "@/features/users/schemas/user-schema";
+import { setAuthToken } from "@/lib/auth-client";
 
 const formSchema = loginSchema.extend({
   name: z.string().trim().optional(),
@@ -42,12 +43,19 @@ export function LoginForm() {
     });
 
     const body = (await response.json().catch(() => null)) as {
+      data?: {
+        token?: string;
+      };
       message?: string;
     } | null;
 
     if (!response.ok) {
       setErrorMessage(body?.message ?? "Login gagal");
       return;
+    }
+
+    if (body?.data?.token) {
+      setAuthToken(body.data.token);
     }
 
     await queryClient.cancelQueries();
@@ -77,12 +85,19 @@ export function LoginForm() {
     });
 
     const body = (await response.json().catch(() => null)) as {
+      data?: {
+        token?: string;
+      };
       message?: string;
     } | null;
 
     if (!response.ok) {
       setErrorMessage(body?.message ?? "Gagal membuat user pertama");
       return;
+    }
+
+    if (body?.data?.token) {
+      setAuthToken(body.data.token);
     }
 
     await queryClient.cancelQueries();

@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       data: {
         id: user.id,
         email: user.email,
+        token,
       },
       message: "Login berhasil",
     });

@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { clearAuthToken } from "@/lib/auth-client";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export function LogoutButton() {
       await fetch("/api/auth/logout", {
         method: "POST",
       });
+      clearAuthToken();
       await queryClient.cancelQueries();
       queryClient.clear();
       router.replace("/login");

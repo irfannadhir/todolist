@@ -8,7 +8,7 @@ import {
 } from "@/features/tasks/schemas/task-schema";
 import { type TaskStatus } from "@/features/tasks/types/task";
 import {
-  getSessionFromRequest,
+  getSessionFromAuthHeaders,
   unauthorizedJsonResponse,
 } from "@/lib/auth-server";
 import { prisma } from "@/lib/prisma";
@@ -92,7 +92,7 @@ function validationErrorResponse(error: z.ZodError) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
+  const session = getSessionFromAuthHeaders(request);
 
   if (!session) {
     return unauthorizedJsonResponse();
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
+  const session = getSessionFromAuthHeaders(request);
 
   if (!session) {
     return unauthorizedJsonResponse();

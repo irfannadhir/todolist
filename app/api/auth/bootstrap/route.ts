@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
       data: {
         id: createdUser.id,
         email: createdUser.email,
+        token,
       },
       message: "User pertama berhasil dibuat",
     });

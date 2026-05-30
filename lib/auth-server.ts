@@ -18,18 +18,15 @@ export async function getSessionFromCookieStore(): Promise<AuthTokenPayload | nu
   }
 }
 
-export async function getSessionFromRequest(request: NextRequest): Promise<AuthTokenPayload | null> {
-  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+export function getSessionFromAuthHeaders(request: NextRequest): AuthTokenPayload | null {
+  const sub = request.headers.get("x-auth-user-id");
+  const email = request.headers.get("x-auth-user-email");
 
-  if (!token) {
+  if (!sub || !email) {
     return null;
   }
 
-  try {
-    return await verifyAuthToken(token);
-  } catch {
-    return null;
-  }
+  return { sub, email };
 }
 
 export function unauthorizedJsonResponse() {
