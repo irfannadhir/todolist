@@ -4,14 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "cron:task-reminder": "node --env-file=.env scripts/task-reminder-cron.mjs",
-    "cron:task-reminder:once": "node --env-file=.env scripts/task-reminder-cron.mjs --run-once",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -26,7 +25,7 @@
     "jose": "^6.2.3",
     "lucide-react": "^1.17.0",
     "next": "16.2.6",
-    "node-cron": "^4.2.1",
+    "node-schedule": "^2.1.1",
     "pg": "^8.21.0",
     "prisma": "^7.8.0",
     "react": "19.2.4",

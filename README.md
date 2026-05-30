@@ -68,8 +68,6 @@ npm run dev
 - `npm run dev`
 - `npm run lint`
 - `npm run build -- --webpack`
-- `npm run cron:task-reminder` (jalan terus sesuai cron expression)
-- `npm run cron:task-reminder:once` (eksekusi sekali untuk tes)
 - `npm run db:generate`
 - `npm run db:migrate`
 - `npm run db:studio`
@@ -89,3 +87,4 @@ Perilaku:
 - Scheduler akan mencari task user yang jatuh tempo hari ini (UTC date) dengan status `PENDING`, `ON_PROGRESS`, atau `HOLD`.
 - Email pengingat dikirim per user ke email akun masing-masing.
 - Pengiriman memakai Resend Node SDK (`resend.emails.send`) dengan React template di `components/email-template.mjs`.
+- Scheduler aktif otomatis saat server Next.js start (via `instrumentation.ts`), jadi tidak perlu menjalankan script manual.
