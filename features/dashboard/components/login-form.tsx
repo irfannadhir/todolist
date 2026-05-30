@@ -16,7 +16,11 @@ const formSchema = loginSchema.extend({
 });
 type FormValues = z.infer<typeof formSchema>;
 
-export function LoginForm() {
+type LoginFormProps = {
+  canBootstrap: boolean;
+};
+
+export function LoginForm({ canBootstrap }: LoginFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -107,7 +111,7 @@ export function LoginForm() {
   });
 
   return (
-    <section className="mx-auto w-full max-w-md rounded-[22px] border border-[#d9d9dd] bg-white p-6 sm:p-7">
+    <section className="mx-auto w-full max-w-md rounded-[22px] border-2 border-[#d9d9dd] bg-white p-6 sm:p-7">
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ff7759]">
         Authentication
       </p>
@@ -129,7 +133,10 @@ export function LoginForm() {
       <form onSubmit={submitHandler} className="mt-5 space-y-4">
         {isBootstrapMode ? (
           <div className="space-y-1">
-            <label htmlFor="name" className="text-sm font-medium text-[#212121]">
+            <label
+              htmlFor="name"
+              className="text-sm font-medium text-[#212121]"
+            >
               Name
             </label>
             <input
@@ -187,20 +194,22 @@ export function LoginForm() {
           <Button type="submit" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? "Memproses..." : "Login"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              if (!isBootstrapMode) {
-                setIsBootstrapMode(true);
-                return;
-              }
-              void bootstrapHandler();
-            }}
-            disabled={form.formState.isSubmitting}
-          >
-            Buat User Pertama
-          </Button>
+          {canBootstrap ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (!isBootstrapMode) {
+                  setIsBootstrapMode(true);
+                  return;
+                }
+                void bootstrapHandler();
+              }}
+              disabled={form.formState.isSubmitting}
+            >
+              Buat User Pertama
+            </Button>
+          ) : null}
           {isBootstrapMode ? (
             <Button
               type="button"
