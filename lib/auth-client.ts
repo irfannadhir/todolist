@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/constant";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/lib/client-constant";
 
 export function setAuthToken(token: string) {
   if (typeof window === "undefined") {
