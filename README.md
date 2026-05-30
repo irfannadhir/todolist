@@ -78,7 +78,7 @@ Tambahkan konfigurasi berikut di `.env`:
 
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
-- `TASK_REMINDER_CRON` (default: `0 8 * * *`)
+- `TASK_REMINDER_CRON` (default: `*/5 * * * *`)
 - `TASK_REMINDER_TIMEZONE` (default: `Asia/Jakarta`)
 - `TASK_REMINDER_DRY_RUN` (`true/false`)
 

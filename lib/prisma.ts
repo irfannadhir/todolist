@@ -6,9 +6,6 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const databaseUrl = process.env.DATABASE_URL;
-
-console.log("databaseUrl", databaseUrl);
-
 const adapter = new PrismaPg({ connectionString: databaseUrl });
 
 export const prisma =
