@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,12 @@ export function TaskForm({
     },
   });
 
-  const isRecurring = form.watch("isRecurring");
+  const isRecurring = Boolean(
+    useWatch({
+      control: form.control,
+      name: "isRecurring",
+    }),
+  );
 
   const submitHandler = form.handleSubmit(async (values) => {
     const normalizedDueDate =

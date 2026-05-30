@@ -3,7 +3,14 @@
 import { addMonths, format, isSameDay, parseISO, subMonths } from "date-fns";
 import { useMemo, useState } from "react";
 
-import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui";
 import { TaskCalendar } from "@/features/tasks/components/task-calendar";
 import { TaskForm } from "@/features/tasks/components/task-form";
 import { TaskList } from "@/features/tasks/components/task-list";
@@ -14,21 +21,30 @@ import {
   useTasks,
   useUpdateTask,
 } from "@/features/tasks/hooks/use-tasks";
-import { type TaskItem, type TaskPayload, type TaskStatus } from "@/features/tasks/types/task";
+import {
+  type TaskItem,
+  type TaskPayload,
+  type TaskStatus,
+} from "@/features/tasks/types/task";
 
 const EMPTY_TASKS: TaskItem[] = [];
 
 export default function TasksPage() {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [selectedDates, setSelectedDates] = useState<Date[]>(() => [new Date()]);
+  const [selectedDates, setSelectedDates] = useState<Date[]>(() => [
+    new Date(),
+  ]);
   const [activeTask, setActiveTask] = useState<TaskItem | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const toast = useToast();
 
   const filters = useMemo(
-    () => ({ month: Number(format(monthDate, "M")), year: Number(format(monthDate, "yyyy")) }),
+    () => ({
+      month: Number(format(monthDate, "M")),
+      year: Number(format(monthDate, "yyyy")),
+    }),
     [monthDate],
   );
 
@@ -38,7 +54,9 @@ export default function TasksPage() {
       return null;
     }
 
-    const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+    const sortedDates = [...selectedDates].sort(
+      (a, b) => a.getTime() - b.getTime(),
+    );
     return {
       dateFrom: format(sortedDates[0], "yyyy-MM-dd"),
       dateTo: format(sortedDates[sortedDates.length - 1], "yyyy-MM-dd"),
@@ -66,7 +84,9 @@ export default function TasksPage() {
     }
 
     if (selectedDates.length <= 1) {
-      return tasks.filter((task) => isSameDay(parseISO(task.dueDate), selectedDate));
+      return tasks.filter((task) =>
+        isSameDay(parseISO(task.dueDate), selectedDate),
+      );
     }
     return EMPTY_TASKS;
   }, [groupedRangeTasksQuery.data, selectedDate, selectedDates, tasks]);
@@ -76,7 +96,9 @@ export default function TasksPage() {
       return undefined;
     }
 
-    const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+    const sortedDates = [...selectedDates].sort(
+      (a, b) => a.getTime() - b.getTime(),
+    );
     const firstDate = format(sortedDates[0], "yyyy-MM-dd");
     const lastDate = format(sortedDates[sortedDates.length - 1], "yyyy-MM-dd");
 
@@ -120,16 +142,19 @@ export default function TasksPage() {
       resetError();
       await createMutation.mutateAsync(payload);
       const nextSelectedDate =
-        payload.isRecurring && payload.dateFrom ? payload.dateFrom : payload.dueDate;
+        payload.isRecurring && payload.dateFrom
+          ? payload.dateFrom
+          : payload.dueDate;
       setSelectedDate(parseISO(nextSelectedDate));
       setSelectedDates([parseISO(nextSelectedDate)]);
       setIsTaskModalOpen(false);
       toast.success({
         title: "Task berhasil disimpan",
-        description: payload.isRecurring ? "Task berulang berhasil dibuat." : "Task baru berhasil dibuat.",
+        description: "Task baru berhasil dibuat.",
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gagal membuat task";
+      const message =
+        error instanceof Error ? error.message : "Gagal membuat task";
       setErrorMessage(message);
       toast.error({ title: "Gagal menyimpan task", description: message });
     }
@@ -147,7 +172,8 @@ export default function TasksPage() {
       setIsTaskModalOpen(false);
       toast.success({ title: "Task berhasil diperbarui" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gagal memperbarui task";
+      const message =
+        error instanceof Error ? error.message : "Gagal memperbarui task";
       setErrorMessage(message);
       toast.error({ title: "Gagal memperbarui task", description: message });
     }
@@ -162,13 +188,17 @@ export default function TasksPage() {
       }
       toast.success({ title: "Task berhasil dihapus" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gagal menghapus task";
+      const message =
+        error instanceof Error ? error.message : "Gagal menghapus task";
       setErrorMessage(message);
       toast.error({ title: "Gagal menghapus task", description: message });
     }
   };
 
-  const handleQuickStatusChange = async (task: TaskItem, status: TaskStatus) => {
+  const handleQuickStatusChange = async (
+    task: TaskItem,
+    status: TaskStatus,
+  ) => {
     if (task.status === status) {
       return;
     }
@@ -179,9 +209,12 @@ export default function TasksPage() {
         id: task.id,
         payload: { status },
       });
-      toast.success({ title: `Status task diubah ke ${status.replace("_", " ")}` });
+      toast.success({
+        title: `Status task diubah ke ${status.replace("_", " ")}`,
+      });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gagal mengubah status task";
+      const message =
+        error instanceof Error ? error.message : "Gagal mengubah status task";
       setErrorMessage(message);
       toast.error({ title: "Gagal mengubah status", description: message });
     }
@@ -202,11 +235,16 @@ export default function TasksPage() {
       <section className="rounded-[22px] bg-[#003c33] p-6 text-white sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">Daily Tracker</p>
-            <h1 className="mt-2 text-4xl leading-tight tracking-tight sm:text-5xl">Tasklist Harian</h1>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffad9b]">
+              Daily Tracker
+            </p>
+            <h1 className="mt-2 text-4xl leading-tight tracking-tight sm:text-5xl">
+              Tasklist Harian
+            </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[#edfce9] sm:text-base">
-              Kelola pekerjaan harian dengan status terstruktur: pending, on progress, hold, dan done.
-              Gunakan kalender untuk melihat ritme kerja setiap tanggal.
+              Kelola pekerjaan harian dengan status terstruktur: pending, on
+              progress, hold, dan done. Gunakan kalender untuk melihat ritme
+              kerja setiap tanggal.
             </p>
           </div>
           <Button onClick={openCreateModal}>Tambah Task</Button>
@@ -234,7 +272,10 @@ export default function TasksPage() {
           onSelectDate={setSelectedDate}
           onSelectDateRange={setSelectedDates}
           onChangeMonth={(value) => {
-            const nextMonth = value === "next" ? addMonths(monthDate, 1) : subMonths(monthDate, 1);
+            const nextMonth =
+              value === "next"
+                ? addMonths(monthDate, 1)
+                : subMonths(monthDate, 1);
             setMonthDate(nextMonth);
           }}
         />
@@ -247,7 +288,9 @@ export default function TasksPage() {
         />
       </div>
 
-      {(tasksQuery.isLoading || createMutation.isPending || updateMutation.isPending) && (
+      {(tasksQuery.isLoading ||
+        createMutation.isPending ||
+        updateMutation.isPending) && (
         <p className="mt-4 text-sm text-[#616161]">Memproses data task...</p>
       )}
 
@@ -262,7 +305,9 @@ export default function TasksPage() {
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{activeTask ? "Edit Task" : "Tambah Task"}</DialogTitle>
+            <DialogTitle>
+              {activeTask ? "Edit Task" : "Tambah Task"}
+            </DialogTitle>
             <DialogDescription>
               {activeTask
                 ? "Perbarui detail task sesuai progres terbaru."

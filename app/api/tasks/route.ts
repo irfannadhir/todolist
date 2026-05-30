@@ -146,7 +146,11 @@ export async function GET(request: NextRequest) {
 
     const tasks = await prisma.task.findMany({
       where,
-      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+      orderBy: [
+        { dueDate: "asc" },
+        { dueTime: { sort: "asc", nulls: "last" } },
+        { createdAt: "asc" },
+      ],
     });
 
     if (groupBy === "recurring") {
