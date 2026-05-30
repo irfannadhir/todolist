@@ -225,7 +225,7 @@ export default function TasksPage() {
         </div>
       ) : null}
 
-      <div className="mt-6">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <TaskCalendar
           monthDate={monthDate}
           selectedDate={selectedDate}
@@ -238,9 +238,7 @@ export default function TasksPage() {
             setMonthDate(nextMonth);
           }}
         />
-      </div>
 
-      <div className="mt-6">
         <TaskList
           tasks={selectedDateTasks}
           onEdit={openEditModal}

@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
+import { JWT_SECRET } from "@/lib/constant";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev_jwt_secret_change_me";
 const JWT_EXPIRES_IN = "7d";
 
 export const AUTH_COOKIE_NAME = "todolist_auth";

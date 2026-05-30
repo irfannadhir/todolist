@@ -3,19 +3,23 @@ import { PrismaClient, TaskStatus } from "@prisma/client";
 import { render } from "@react-email/render";
 import { Resend } from "resend";
 
+import {
+  DATABASE_URL,
+  RESEND_API_KEY,
+  RESEND_FROM_EMAIL,
+  TASK_REMINDER_DRY_RUN,
+  TASK_REMINDER_TIMEZONE,
+} from "@/lib/constant";
 import { EmailTemplate } from "../components/email-template.mjs";
 
-const databaseUrl = process.env.DATABASE_URL;
 const REMINDER_STATUSES: TaskStatus[] = [
   TaskStatus.PENDING,
   TaskStatus.ON_PROGRESS,
   TaskStatus.HOLD,
 ];
-const TIMEZONE = process.env.TASK_REMINDER_TIMEZONE ?? "Asia/Jakarta";
-const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL ?? "Daily Tracker <onboarding@resend.dev>";
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const DRY_RUN = process.env.TASK_REMINDER_DRY_RUN === "true";
+const TIMEZONE = TASK_REMINDER_TIMEZONE;
+const FROM_EMAIL = RESEND_FROM_EMAIL;
+const DRY_RUN = TASK_REMINDER_DRY_RUN;
 
 let prisma: PrismaClient | undefined;
 
@@ -46,11 +50,11 @@ function getPrismaClient() {
     return prisma;
   }
 
-  if (!databaseUrl) {
+  if (!DATABASE_URL) {
     throw new Error("DATABASE_URL belum di-set di environment.");
   }
 
-  const adapter = new PrismaPg({ connectionString: databaseUrl });
+  const adapter = new PrismaPg({ connectionString: DATABASE_URL });
   prisma = new PrismaClient({ adapter });
   return prisma;
 }

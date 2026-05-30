@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
+import { IS_PRODUCTION } from "@/lib/constant";
 
 export async function POST() {
   const response = NextResponse.json({ message: "Logout berhasil" });
@@ -8,7 +9,7 @@ export async function POST() {
   response.cookies.set(AUTH_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: IS_PRODUCTION,
     path: "/",
     maxAge: 0,
   });

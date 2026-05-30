@@ -1,15 +1,16 @@
 import { type NextRequest } from "next/server";
 
+import { CRON_SECRET, IS_PRODUCTION } from "@/lib/constant";
 import { runTaskReminderJob } from "@/lib/task-reminder-scheduler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isAuthorized(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
+  const secret = CRON_SECRET;
 
   if (!secret) {
-    return process.env.NODE_ENV !== "production";
+    return !IS_PRODUCTION;
   }
 
   const authHeader = request.headers.get("authorization");

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { loginSchema } from "@/features/users/schemas/user-schema";
 import { AUTH_COOKIE_NAME, comparePassword, signAuthToken } from "@/lib/auth";
+import { IS_PRODUCTION } from "@/lib/constant";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: IS_PRODUCTION,
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });

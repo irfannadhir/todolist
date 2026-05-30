@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/task-reminder",
-      "schedule": "10 5 * * *"
-    }
-  ]
-}
